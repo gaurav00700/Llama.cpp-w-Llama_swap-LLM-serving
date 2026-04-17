@@ -1,6 +1,17 @@
 # Ref: https://github.com/mostlygeek/llama-swap/blob/main/docs/configuration.md
 
-logLevel: info  # levels: debug, info, warn, error
+# levels: debug, info, warn, error
+logLevel: info  
+
+# sendLoadingState: inject loading status updates into the reasoning (thinking) field
+# - when true, a stream of loading messages will be sent to the client in the
+#   reasoning field so chat UIs can show that loading is in progress.
+sendLoadingState: true
+
+# globalTTL: the default TTL in seconds before unloading a model
+# - optional, default: 0 (never automatically unload)
+# - must be >= 0
+globalTTL: 300
 
 models:
   Qwen3.5-Uncensored:4B-Q4_K_M:
@@ -81,21 +92,37 @@ models:
     ttl: 300     
     
 # This section enables both models to run at the same time
-#groups:
-  #LLM + Embedding:
-  #  profiles:
-  #    - Gemma4:E4B-UD-Q4_K_XL
-  #    - GemmaEmbedding:300M-f32
+# Expansion examples:
+#   "L"                  → [L]
+#   "a & b"              → [a, b]
+#   "a | b"              → [a], [b]
+#   "(a | b) & c"        → [a, c], [b, c]
+#   "(a | b) & (c | d)"  → [a,c], [a,d], [b,c], [b,d]
+matrix:
+  vars:
+    l1: Qwen3.5-Uncensored:4B-Q4_K_M
+    l2: Qwen3.5:4B-Q6_K_XL
+    l3: Llama3.1:8B-UD-Q4_K_XL
+    l4: Gemma4:E2B-UD-Q6_K_XL
+    l5: Gemma4:E4B-UD-Q4_K_XL
+    e1: GemmaEmbedding:300M-f32
+    
+  # evict_costs: relative cost of losing a running model (default: 1)
+  #evict_costs:
+  #  l1: 50 # vllm backend, slow cold start
+  #  l2: 30 # 70B weights, slow to load
+    
+  # Expansion examples:
+  #   "a"                  → [a]
+  #   "a & b"              → [a, b]
+  #   "a | b"              → [a], [b]
+  #   "(a | b) & c"        → [a, c], [b, c]
+  #   "(a | b) & c & d"    → [a, c, d], [b, c, d]
+  #   "(a | b) & (c | d)"  → [a,c], [a,d], [b,c], [b,d]
+  sets:
+    llm_with_embedding: "(l1 | l2 | l3 | l4 | l5) & e1"
 
-  # This group stays loaded regardless of other model requests
-  #embedding_service:
-  #  persistent: true  # Prevents other groups from unloading this one
-  #  exclusive: false   # Starting this group won't unload others
-  #  swap: false        # Allow all members in this group to run at once
-  #  members:
-  #    - "GemmaEmbedding:300M-f32"
-
-# Preload embedding model on startup so it is ready immediately
+# Preload model on startup so it is ready immediately
 #hooks:
 #  on_startup:
 #    preload:
