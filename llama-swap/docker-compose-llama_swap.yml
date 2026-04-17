@@ -14,6 +14,8 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+    environment:
+      - LD_LIBRARY_PATH=/opt/llama-lib
     volumes:
       # Mapped volumes from the docker run command
       - ~/.cache/huggingface/hub:/models
