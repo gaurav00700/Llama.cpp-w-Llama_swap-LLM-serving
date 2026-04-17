@@ -1,0 +1,102 @@
+# Ref: https://github.com/mostlygeek/llama-swap/blob/main/docs/configuration.md
+
+logLevel: info  # levels: debug, info, warn, error
+
+models:
+  Qwen3.5-Uncensored:4B-Q4_K_M:
+    name: "Qwen3.5-Uncensored:4B"
+    cmd: |
+      llama-server 
+      --port ${PORT} 
+      --model /models/models--HauhauCS--Qwen3.5-4B-Uncensored-HauhauCS-Aggressive/snapshots/c09cdbcdb1fefad6d335809d445621b5f5ba0c6e/Qwen3.5-4B-Uncensored-HauhauCS-Aggressive-Q4_K_M.gguf 
+      --mmproj /models/models--HauhauCS--Qwen3.5-4B-Uncensored-HauhauCS-Aggressive/snapshots/c09cdbcdb1fefad6d335809d445621b5f5ba0c6e/mmproj-Qwen3.5-4B-Uncensored-HauhauCS-Aggressive-BF16.gguf
+      #--served-model-name "Qwen3.5-Uncensored:4B-Q4_K_M"
+      --ctx-size 100000
+      --gpu-layers 999
+      #--jinja
+      #--temprature 0.6
+      #--top-k 40
+      #--top-p 0.95
+      #--cache-type-k q8_0  
+      #--cache-type-v q8_0
+      --no-warmup
+    ttl: 300    
+    
+  Qwen3.5:4B-Q6_K_XL:
+    name: "Qwen3.5:4B"
+    cmd: |
+      llama-server 
+      --port ${PORT} 
+      --model /models/models--unsloth--Qwen3.5-4B-GGUF/snapshots/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-UD-Q6_K_XL.gguf
+      --mmproj /models/models--unsloth--Qwen3.5-4B-GGUF/snapshots/e87f176479d0855a907a41277aca2f8ee7a09523/mmproj-BF16.gguf
+      --ctx-size 100000
+      --gpu-layers 999
+      --no-warmup
+    ttl: 300     
+    
+  Llama3.1:8B-UD-Q4_K_XL:
+    name: "Llama3.1:8B"
+    cmd: |
+      llama-server 
+      --port ${PORT} 
+      --model /models/models--unsloth--Llama-3.1-8B-Instruct-GGUF/snapshots/600b0020115fd6b17f0752848fe7b5a1be686bcd/Llama-3.1-8B-Instruct-UD-Q4_K_XL.gguf
+      --ctx-size 50000
+      --gpu-layers 999
+      --no-warmup
+    ttl: 300     
+  
+  Gemma4:E2B-UD-Q6_K_XL:
+    name: "Gemma4:E2B"
+    cmd: |
+      llama-server 
+      --port ${PORT} 
+      --model /models/models--unsloth--gemma-4-E2B-it-GGUF/snapshots/f064409f340b34190993560b2168133e5dbae558/gemma-4-E2B-it-UD-Q6_K_XL.gguf
+      --mmproj /models/models--unsloth--gemma-4-E2B-it-GGUF/snapshots/f064409f340b34190993560b2168133e5dbae558/mmproj-BF16.gguf
+      --ctx-size 256000
+      --gpu-layers 999
+      --no-warmup
+    ttl: 300     
+  
+  Gemma4:E4B-UD-Q4_K_XL:
+    name: "Gemma4:E4B"
+    cmd: |
+      llama-server 
+      --port ${PORT} 
+      --model /models/models--unsloth--gemma-4-E4B-it-GGUF/snapshots/ce152932ac27bc40bc9c727386760424d50bb456/gemma-4-E4B-it-UD-Q4_K_XL.gguf
+      --mmproj /models/models--unsloth--gemma-4-E4B-it-GGUF/snapshots/ce152932ac27bc40bc9c727386760424d50bb456/mmproj-BF16.gguf
+      --ctx-size 175000
+      --gpu-layers 999
+      --no-warmup
+    ttl: 300     
+  
+  GemmaEmbedding:300M-f32:
+    name: "GemmaEmbedding:300M"
+    cmd: |
+      llama-server 
+      --port ${PORT} 
+      --model /models/models--unsloth--embeddinggemma-300m-GGUF/snapshots/6661a6504c30d8304af13455cb4a5d4f5bc6011f/embeddinggemma-300M-F32.gguf
+      #--ctx-size 256000
+      --gpu-layers 999
+      --no-warmup
+    ttl: 300     
+    
+# This section enables both models to run at the same time
+#groups:
+  #LLM + Embedding:
+  #  profiles:
+  #    - Gemma4:E4B-UD-Q4_K_XL
+  #    - GemmaEmbedding:300M-f32
+
+  # This group stays loaded regardless of other model requests
+  #embedding_service:
+  #  persistent: true  # Prevents other groups from unloading this one
+  #  exclusive: false   # Starting this group won't unload others
+  #  swap: false        # Allow all members in this group to run at once
+  #  members:
+  #    - "GemmaEmbedding:300M-f32"
+
+# Preload embedding model on startup so it is ready immediately
+#hooks:
+#  on_startup:
+#    preload:
+#      - "GemmaEmbedding:300M-f32"

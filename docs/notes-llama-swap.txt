@@ -1,0 +1,19 @@
+## With llama-swap
+docker run -d --runtime nvidia -p 9292:8080 \
+ -v ~/.cache/huggingface/hub:/models \
+ -v ~/.llm/llama-swap:/app/config \
+ --name llswap \
+ ghcr.io/mostlygeek/llama-swap:cuda \
+ --config /app/config/config.yaml \
+ --watch-config
+ 
+## With locally build llama.cpp binaries
+docker run -d --runtime nvidia -p 9292:8080 \
+ -v ~/.cache/huggingface/hub:/models \
+ -v ~/.llm/llama-swap:/app/config \
+ -v ~/.llm/llama.cpp/build/bin/llama-server:/app/llama-server \
+ -v ~/.llm/llama.cpp/build/bin:/opt/llama-lib \
+ --name llswap \
+ ghcr.io/mostlygeek/llama-swap:cuda \
+ --config /app/config/config.yaml \
+ --watch-config

@@ -1,0 +1,16 @@
+[Unit]
+Description=Llama.cpp Auto Build (One-shot)
+After=network.target
+
+[Service]
+Type=oneshot
+User=gaurav
+WorkingDirectory=/home/gaurav/.llm
+
+ExecStart=/bin/bash /home/gaurav/.llm/scripts/update_build.sh
+
+StandardOutput=append:/home/gaurav/.llm/update_build.log
+StandardError=append:/home/gaurav/.llm/update_build.log
+
+[Install]
+WantedBy=multi-user.target

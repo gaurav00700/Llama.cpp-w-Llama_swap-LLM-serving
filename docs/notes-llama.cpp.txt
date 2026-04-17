@@ -1,0 +1,17 @@
+## Build
+#cmake -B build -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES="89" && cmake --build build --config Release -j 8
+cmake \
+  -S . \
+  -B build \
+  -DGGML_CUDA=ON \
+  -DGGML_CCACHE=ON \	
+  -DCMAKE_CUDA_ARCHITECTURES="89" \
+  -DCMAKE_BUILD_RPATH='$ORIGIN' \
+  -DCMAKE_INSTALL_RPATH='$ORIGIN' && \
+cmake --build build --config Release -j $(nproc)
+
+## update_build.sh
+sudo -E bash /home/gaurav/.llm/scripts/update_build.sh
+
+## Start
+llama-server -m ~/.cache/huggingface/hub/models--unsloth--Qwen3-Coder-Next-GGUF/snapshots/ce09c67b53bc8739eef83fe67b2f5d293c270632/Qwen3-Coder-Next-UD-IQ3_XXS.gguf --ctx-size 100000 --port 11433

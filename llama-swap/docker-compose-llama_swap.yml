@@ -1,0 +1,27 @@
+name: llamaswap
+
+services:
+  llswap:
+    container_name: llswap
+    image: ghcr.io/mostlygeek/llama-swap:cuda
+    restart: unless-stopped
+    ports:
+      - 9292:8080
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      # Mapped volumes from the docker run command
+      - ~/.cache/huggingface/hub:/models
+      - ~/.llm/llama-swap:/app/config
+      - ~/.llm/llama.cpp/build/bin/llama-server:/app/llama-server
+      - ~/.llm/llama.cpp/build/bin:/opt/llama-lib
+    entrypoint:
+      - /app/llama-swap
+      - --config
+      - /app/config/config.yaml
+      - --watch-config

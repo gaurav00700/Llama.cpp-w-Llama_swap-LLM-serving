@@ -1,0 +1,21 @@
+[Unit]
+Description=Run llama.cpp auto-build as per schedule
+
+[Timer]
+# Run deplay after system boot (avoid immediate spike)
+OnBootSec=10min
+
+# Run schedule. Every hours/days after last execution
+#OnUnitActiveSec=1d
+
+# Run daily (calendar based)
+OnCalendar=daily
+
+# Catch missed runs (shutdown case), run immediately on next boot
+Persistent=true
+
+# Run delay after system wake (avoid immediate spike)
+AccuracySec=10min
+
+[Install]
+WantedBy=timers.target
