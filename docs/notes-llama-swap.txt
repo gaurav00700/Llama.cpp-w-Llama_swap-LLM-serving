@@ -17,3 +17,6 @@ docker run -d --runtime nvidia -p 9292:8080 \
  ghcr.io/mostlygeek/llama-swap:cuda \
  --config /app/config/config.yaml \
  --watch-config
+ 
+# Docker compose
+docker compose -f ~/.llm/llama-swap/docker-compose-llama_swap.yaml --env-file ~/.llm/.env up -d

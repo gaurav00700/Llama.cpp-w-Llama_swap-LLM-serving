@@ -32,24 +32,27 @@
 #!/bin/bash
 set -e
 
-
 # === 🔒 SAFETY === Prevent root execution
-
 if [ "$(id -u)" -eq 0 ]; then
     echo "ERROR: Do NOT run this script as root"
     exit 1
 fi
 
+# === 📦 LOAD ENV FILE ===
+ENV_FILE="$HOME/.llm/.env"
+if [ -f "$ENV_FILE" ]; then
+    export $(grep -v '^#' "$ENV_FILE" | xargs)
+fi
 
-# === 🌍 ENVIRONMENT === CUDA setup
-export CUDA_HOME=/usr/local/cuda
+# === CUDA setup ===
+#export CUDA_HOME="${CUDA_HOME}"
 export PATH=$CUDA_HOME/bin:$PATH
 export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 
 # === 📁 PATH CONFIG ===
-SOURCE_DIR="$HOME/.llm/llama.cpp"
-BUILD_DIR="$HOME/.llm/llama.cpp/build"
-BUILD_PROD="$HOME/.llm/llama.cpp/build_prod"
+SOURCE_DIR="$HOME/.llm/${LLAMACPP_REPO}"
+BUILD_DIR="$SOURCE_DIR/build"
+BUILD_PROD="$SOURCE_DIR/build_prod"
 
 # === ⚙️ CONFIG ===
 BRANCH="master"
@@ -57,6 +60,7 @@ CUDA_ARCHITECTURE="89"
 CONTAINER_NAME="llswap"
 
 # === 🧠 STATE FILES ===
+ENV_HASH_FILE="$HOME/.llm/llama_env_hash"
 HASH_FILE="$HOME/.llm/llama_cpp_last_hash"
 BIN_HASH_FILE="$HOME/.llm/llama_binary_hash"
 LAST_RUN_FILE="$HOME/.llm/last_successful_run"
@@ -89,6 +93,32 @@ should_run_now() {
 
     if [ "$DIFF" -ge "$MAX_DELAY" ]; then
         log "Missed scheduled run → triggering build"
+        return 0
+    fi
+
+    return 1
+}
+
+
+# === 🔍 ENV CHANGE DETECTION ===
+has_env_changes() {
+    ENV_FILE="$HOME/.llm/.env"
+
+    if [ ! -f "$ENV_FILE" ]; then
+        return 1
+    fi
+
+    CURRENT_ENV_HASH=$(sha256sum "$ENV_FILE" | awk '{print $1}')
+
+    if [ -f "$ENV_HASH_FILE" ]; then
+        OLD_ENV_HASH=$(cat "$ENV_HASH_FILE")
+
+        if [ "$CURRENT_ENV_HASH" != "$OLD_ENV_HASH" ]; then
+            log ".env file changed"
+            return 0
+        fi
+    else
+        # first run
         return 0
     fi
 
@@ -133,13 +163,16 @@ build_binaries() {
 
     log "Updating source..."
     git reset --hard origin/$BRANCH
-
+	
+	# Get current hash values 
     CURRENT_HASH=$(git rev-parse HEAD)
+	CURRENT_ENV_HASH=$(sha256sum "$HOME/.llm/.env" | awk '{print $1}')
 
     log "Starting incremental build..."
 
     mkdir -p "$BUILD_DIR"
-
+	
+	# Cmake configurations
     cmake \
       -S "$SOURCE_DIR" \
       -B "$BUILD_DIR" \
@@ -148,7 +181,8 @@ build_binaries() {
       -DCMAKE_CUDA_ARCHITECTURES="$CUDA_ARCHITECTURE" \
       -DCMAKE_BUILD_RPATH='$ORIGIN' \
       -DCMAKE_INSTALL_RPATH='$ORIGIN'
-
+	
+	# Start the build
     if ! cmake --build "$BUILD_DIR" --config Release -j $(nproc); then
         log "Build FAILED"
         return 1
@@ -160,17 +194,20 @@ build_binaries() {
         log "ERROR: llama-server not found"
         return 1
     fi
-
+	
+	# Save new Hashes
     NEW_BIN_HASH=$(sha256sum "$BIN_DIR/llama-server" | awk '{print $1}')
     OLD_BIN_HASH=$(cat "$BIN_HASH_FILE" 2>/dev/null || echo "")
-
+	
+	# Deployment of build binaries
     log "Deploying binaries..."
 
     rm -rf "$BUILD_PROD"
     ln -s "$BIN_DIR" "$BUILD_PROD"
 
     echo "$CURRENT_HASH" > "$HASH_FILE"
-    
+    echo "$CURRENT_ENV_HASH" > "$ENV_HASH_FILE"
+	
     # === 🔄 CONDITIONAL RESTART ===
     if [ "$NEW_BIN_HASH" != "$OLD_BIN_HASH" ]; then
         log "Binary changed → restarting container"
@@ -191,7 +228,7 @@ build_binaries() {
 }
 
 # === 🚀 ENTRYPOINT ===
-if should_run_now || has_changes; then
+if should_run_now || has_changes || has_env_changes; then
     build_binaries
     date +%s > "$LAST_RUN_FILE"
 else

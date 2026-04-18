@@ -89,6 +89,7 @@ llama.cpp-hot-reload-stack/
 │   ├── notes-llama-swap.txt
 │   └── notes-llama.cpp.txt
 │
+├── .env
 ├── .gitignore
 └── README.md
 ```
