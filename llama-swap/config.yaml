@@ -13,22 +13,32 @@ sendLoadingState: true
 # - must be >= 0
 globalTTL: 300
 
+#llama-server flags
+#--port ${PORT} 
+#--model /models/path <model_path_local>
+#--ctx-size 131072    <model_context_window>
+#--no-mmproj-offload  <keep the mmproj file on CPU RAM>
+#--gpu-layers 999     <full GPU offload (if VRAM allows)>
+#--flash-attn on      <faster attention on/off/auto(default)>
+#--temprature 1       <sampling temperature>
+#--cache-type-kv q4_0 <KV cache optimization (key+value)>
+#--cache-type-k q8_0  <KV cache optimization (key)>
+#--cache-type-v q8_0  <KV cache optimization (value)>
+#--jinja              <enable chat templating>
+#--no-mmap true       <disable mmap (better for Docker sometimes)>
+#--no-warmup          <faster startup (no prefill)>
+
 models:
-  Qwen3.5:4B-UD-Q5_K_XL:
+  Qwen3.5:4B-UD-Q4_K_XL:
     name: "Qwen3.5:4B"
     cmd: |
       llama-server 
       --port ${PORT} 
-      --model /models/models--unsloth--Qwen3.5-4B-GGUF/snapshots/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-UD-Q5_K_XL.gguf
+      --model /models/models--unsloth--Qwen3.5-4B-GGUF/snapshots/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-UD-Q4_K_XL.gguf
       --mmproj /models/models--unsloth--Qwen3.5-4B-GGUF/snapshots/e87f176479d0855a907a41277aca2f8ee7a09523/mmproj-BF16.gguf
       --ctx-size 150000
+      --no-mmproj-offload
       --gpu-layers 999
-      #--jinja
-      #--temprature 0.6
-      #--top-k 40
-      #--top-p 0.95
-      #--cache-type-k q8_0  
-      #--cache-type-v q8_0
       --no-warmup
     ttl: 300     
    
@@ -40,6 +50,7 @@ models:
       --model /models/models--HauhauCS--Qwen3.5-4B-Uncensored-HauhauCS-Aggressive/snapshots/c09cdbcdb1fefad6d335809d445621b5f5ba0c6e/Qwen3.5-4B-Uncensored-HauhauCS-Aggressive-Q4_K_M.gguf 
       --mmproj /models/models--HauhauCS--Qwen3.5-4B-Uncensored-HauhauCS-Aggressive/snapshots/c09cdbcdb1fefad6d335809d445621b5f5ba0c6e/mmproj-Qwen3.5-4B-Uncensored-HauhauCS-Aggressive-BF16.gguf
       --ctx-size 150000
+      --no-mmproj-offload
       --gpu-layers 999
       --no-warmup
     ttl: 300    
@@ -63,6 +74,7 @@ models:
       --model /models/models--unsloth--gemma-4-E2B-it-GGUF/snapshots/f064409f340b34190993560b2168133e5dbae558/gemma-4-E2B-it-UD-Q6_K_XL.gguf
       --mmproj /models/models--unsloth--gemma-4-E2B-it-GGUF/snapshots/f064409f340b34190993560b2168133e5dbae558/mmproj-BF16.gguf
       --ctx-size 256000
+      --no-mmproj-offload
       --gpu-layers 999
       --no-warmup
     ttl: 300     
@@ -74,7 +86,8 @@ models:
       --port ${PORT} 
       --model /models/models--unsloth--gemma-4-E4B-it-GGUF/snapshots/ce152932ac27bc40bc9c727386760424d50bb456/gemma-4-E4B-it-UD-Q4_K_XL.gguf
       --mmproj /models/models--unsloth--gemma-4-E4B-it-GGUF/snapshots/ce152932ac27bc40bc9c727386760424d50bb456/mmproj-BF16.gguf
-      --ctx-size 175000
+      --ctx-size 250000
+      --no-mmproj-offload
       --gpu-layers 999
       --no-warmup
     ttl: 300  
@@ -86,7 +99,8 @@ models:
       --port ${PORT} 
       --model /models//models--HauhauCS--Gemma-4-E4B-Uncensored-HauhauCS-Aggressive/snapshots/45b6a334b4bcd1d7f37179df58b3b1d66a184e5d/Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q4_K_M.gguf
       --mmproj /models//models--HauhauCS--Gemma-4-E4B-Uncensored-HauhauCS-Aggressive/snapshots/45b6a334b4bcd1d7f37179df58b3b1d66a184e5d/mmproj-Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-f16.gguf
-      --ctx-size 175000
+      --ctx-size 250000
+      --no-mmproj-offload
       --gpu-layers 999
       --no-warmup
     ttl: 300     
@@ -97,11 +111,10 @@ models:
       llama-server 
       --port ${PORT} 
       --model /models/models--unsloth--embeddinggemma-300m-GGUF/snapshots/6661a6504c30d8304af13455cb4a5d4f5bc6011f/embeddinggemma-300M-F32.gguf
-      --gpu-layers 999
       --no-warmup
     ttl: 300     
     
-# This section enables both models to run at the same time
+# This section enables to run multiple models at the same time
 # Expansion examples:
 #   "L"                  → [L]
 #   "a & b"              → [a, b]
@@ -110,7 +123,7 @@ models:
 #   "(a | b) & (c | d)"  → [a,c], [a,d], [b,c], [b,d]
 matrix:
   vars:
-    l1: Qwen3.5:4B-UD-Q5_K_XL
+    l1: Qwen3.5:4B-UD-Q4_K_XL
     l2: Qwen3.5-Uncensored:4B-Q4_K_M
     l3: Llama3.1:8B-UD-Q4_K_XL
     l4: Gemma4:E2B-UD-Q6_K_XL
@@ -132,145 +145,7 @@ matrix:
   #   "(a | b) & (c | d)"  → [a,c], [a,d], [b,c], [b,d]
   sets:
     llm_with_embedding: "(l1 | l2 | l3 | l4 | l5 | l6) & e1"
-
-# Preload model on startup so it is ready immediately
-#hooks:
-#  on_startup:
-#    preload:
-#      - "GemmaEmbedding:300M-f32"# Ref: https://github.com/mostlygeek/llama-swap/blob/main/docs/configuration.md
-
-# levels: debug, info, warn, error
-logLevel: info  
-
-# sendLoadingState: inject loading status updates into the reasoning (thinking) field
-# - when true, a stream of loading messages will be sent to the client in the
-#   reasoning field so chat UIs can show that loading is in progress.
-sendLoadingState: true
-
-# globalTTL: the default TTL in seconds before unloading a model
-# - optional, default: 0 (never automatically unload)
-# - must be >= 0
-globalTTL: 300
-
-models:
-  Qwen3.5:4B-UD-Q5_K_XL:
-    name: "Qwen3.5:4B"
-    cmd: |
-      llama-server 
-      --port ${PORT} 
-      --model /models/models--unsloth--Qwen3.5-4B-GGUF/snapshots/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-UD-Q5_K_XL.gguf
-      --mmproj /models/models--unsloth--Qwen3.5-4B-GGUF/snapshots/e87f176479d0855a907a41277aca2f8ee7a09523/mmproj-BF16.gguf
-      --ctx-size 150000
-      --gpu-layers 999
-      #--jinja
-      #--temprature 0.6
-      #--top-k 40
-      #--top-p 0.95
-      #--cache-type-k q8_0  
-      #--cache-type-v q8_0
-      --no-warmup
-    ttl: 300     
-   
-  Qwen3.5-Uncensored:4B-Q4_K_M:
-    name: "Qwen3.5-Uncensored:4B"
-    cmd: |
-      llama-server 
-      --port ${PORT} 
-      --model /models/models--HauhauCS--Qwen3.5-4B-Uncensored-HauhauCS-Aggressive/snapshots/c09cdbcdb1fefad6d335809d445621b5f5ba0c6e/Qwen3.5-4B-Uncensored-HauhauCS-Aggressive-Q4_K_M.gguf 
-      --mmproj /models/models--HauhauCS--Qwen3.5-4B-Uncensored-HauhauCS-Aggressive/snapshots/c09cdbcdb1fefad6d335809d445621b5f5ba0c6e/mmproj-Qwen3.5-4B-Uncensored-HauhauCS-Aggressive-BF16.gguf
-      --ctx-size 150000
-      --gpu-layers 999
-      --no-warmup
-    ttl: 300    
-   
-  Llama3.1:8B-UD-Q4_K_XL:
-    name: "Llama3.1:8B"
-    cmd: |
-      llama-server 
-      --port ${PORT} 
-      --model /models/models--unsloth--Llama-3.1-8B-Instruct-GGUF/snapshots/600b0020115fd6b17f0752848fe7b5a1be686bcd/Llama-3.1-8B-Instruct-UD-Q4_K_XL.gguf
-      --ctx-size 50000
-      --gpu-layers 999
-      --no-warmup
-    ttl: 300     
-  
-  Gemma4:E2B-UD-Q6_K_XL:
-    name: "Gemma4:E2B"
-    cmd: |
-      llama-server 
-      --port ${PORT} 
-      --model /models/models--unsloth--gemma-4-E2B-it-GGUF/snapshots/f064409f340b34190993560b2168133e5dbae558/gemma-4-E2B-it-UD-Q6_K_XL.gguf
-      --mmproj /models/models--unsloth--gemma-4-E2B-it-GGUF/snapshots/f064409f340b34190993560b2168133e5dbae558/mmproj-BF16.gguf
-      --ctx-size 256000
-      --gpu-layers 999
-      --no-warmup
-    ttl: 300     
-  
-  Gemma4:E4B-UD-Q4_K_XL:
-    name: "Gemma4:E4B"
-    cmd: |
-      llama-server 
-      --port ${PORT} 
-      --model /models/models--unsloth--gemma-4-E4B-it-GGUF/snapshots/ce152932ac27bc40bc9c727386760424d50bb456/gemma-4-E4B-it-UD-Q4_K_XL.gguf
-      --mmproj /models/models--unsloth--gemma-4-E4B-it-GGUF/snapshots/ce152932ac27bc40bc9c727386760424d50bb456/mmproj-BF16.gguf
-      --ctx-size 175000
-      --gpu-layers 999
-      --no-warmup
-    ttl: 300  
-
-  Gemma4-Uncensored:E4B-Q4_K_M:
-    name: "Gemma4-Uncensored:E4B"
-    cmd: |
-      llama-server 
-      --port ${PORT} 
-      --model /models//models--HauhauCS--Gemma-4-E4B-Uncensored-HauhauCS-Aggressive/snapshots/45b6a334b4bcd1d7f37179df58b3b1d66a184e5d/Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q4_K_M.gguf
-      --mmproj /models//models--HauhauCS--Gemma-4-E4B-Uncensored-HauhauCS-Aggressive/snapshots/45b6a334b4bcd1d7f37179df58b3b1d66a184e5d/mmproj-Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-f16.gguf
-      --ctx-size 175000
-      --gpu-layers 999
-      --no-warmup
-    ttl: 300     
-  
-  GemmaEmbedding:300M-f32:
-    name: "GemmaEmbedding:300M"
-    cmd: |
-      llama-server 
-      --port ${PORT} 
-      --model /models/models--unsloth--embeddinggemma-300m-GGUF/snapshots/6661a6504c30d8304af13455cb4a5d4f5bc6011f/embeddinggemma-300M-F32.gguf
-      --gpu-layers 999
-      --no-warmup
-    ttl: 300     
-    
-# This section enables both models to run at the same time
-# Expansion examples:
-#   "L"                  → [L]
-#   "a & b"              → [a, b]
-#   "a | b"              → [a], [b]
-#   "(a | b) & c"        → [a, c], [b, c]
-#   "(a | b) & (c | d)"  → [a,c], [a,d], [b,c], [b,d]
-matrix:
-  vars:
-    l1: Qwen3.5:4B-UD-Q5_K_XL
-    l2: Qwen3.5-Uncensored:4B-Q4_K_M
-    l3: Llama3.1:8B-UD-Q4_K_XL
-    l4: Gemma4:E2B-UD-Q6_K_XL
-    l5: Gemma4:E4B-UD-Q4_K_XL
-    l6: Gemma4-Uncensored:E4B-Q4_K_M
-    e1: GemmaEmbedding:300M-f32
-    
-  # evict_costs: relative cost of losing a running model (default: 1)
-  #evict_costs:
-  #  l1: 50 # vllm backend, slow cold start
-  #  l2: 30 # 70B weights, slow to load
-    
-  # Expansion examples:
-  #   "a"                  → [a]
-  #   "a & b"              → [a, b]
-  #   "a | b"              → [a], [b]
-  #   "(a | b) & c"        → [a, c], [b, c]
-  #   "(a | b) & c & d"    → [a, c, d], [b, c, d]
-  #   "(a | b) & (c | d)"  → [a,c], [a,d], [b,c], [b,d]
-  sets:
-    llm_with_embedding: "(l1 | l2 | l3 | l4 | l5 | l6) & e1"
+    #llm: "l1 | l2 | l3 | l4 | l5 | l6"
 
 # Preload model on startup so it is ready immediately
 #hooks:

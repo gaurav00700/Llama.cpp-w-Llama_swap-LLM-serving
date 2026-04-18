@@ -99,7 +99,6 @@ should_run_now() {
     return 1
 }
 
-
 # === 🔍 ENV CHANGE DETECTION ===
 has_env_changes() {
     ENV_FILE="$HOME/.llm/.env"
@@ -121,7 +120,6 @@ has_env_changes() {
         # first run
         return 0
     fi
-
     return 1
 }
 
