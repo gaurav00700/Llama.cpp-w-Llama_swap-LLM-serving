@@ -25,7 +25,7 @@ globalTTL: 300
 #--cache-type-k q8_0  <KV cache optimization (key)>
 #--cache-type-v q8_0  <KV cache optimization (value)>
 #--jinja              <enable chat templating>
-#--no-mmap true       <disable mmap (better for Docker sometimes)>
+#--mmap/--no-mmap     <disable mmap (better for Docker sometimes)>
 #--no-warmup          <faster startup (no prefill)>
 
 models:
@@ -132,7 +132,7 @@ matrix:
     e1: GemmaEmbedding:300M-f32
     
   # evict_costs: relative cost of losing a running model (default: 1)
-  #evict_costs:
+  # evict_costs:
   #  l1: 50 # vllm backend, slow cold start
   #  l2: 30 # 70B weights, slow to load
     
